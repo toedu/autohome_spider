@@ -16,17 +16,27 @@ class AutohomeSpiderPipeline(object):
         return item
 
 
+# 保存 brand.json 文件
+class BrandJsonPipeline(object):
+    def __init__(self):
+        self.file = open('data/brand.json', 'wb')
+
+    def process_item(self, item, spider):
+        line = json.dumps(dict(item)) + "\n"
+        self.file.write(line.encode('utf-8'))
+        return item
+
 
 class ImagespiderPipeline(ImagesPipeline):
 
     def get_media_requests(self, item, info):
-    	imgName = item['tag'] + '_' + item['id'] + ".jpg"
-    	yield Request(item['imgUrl'], meta={'name':imgName})
+        imgName = item['tag'] + '_' + item['id'] + ".jpg"
+        yield Request(item['imgUrl'], meta={'name': imgName})
 
         # 循环每一张图片地址下载，若传过来的不是集合则无需循环直接yield
         # for image_url in item['imgurl']:
-            # yield Request(image_url)
+        # yield Request(image_url)
 
     def file_path(self, request, response=None, info=None):
-    	imgName = request.meta['name']
-    	return 'brand/' + imgName
+        imgName = request.meta['name']
+        return 'brand/' + imgName

@@ -19,12 +19,13 @@ DOWNLOADER_MIDDLEWARES = {
 
 # 开启的pipeline
 ITEM_PIPELINES = {
-	# 'autohome_spider.pipelines.ImagespiderPipeline': 1,
-    'autohome_spider.pipelines.AutohomeSpiderPipeline': 300,
+    # 'autohome_spider.pipelines.ImagespiderPipeline': 1,
+    # 'autohome_spider.pipelines.AutohomeSpiderPipeline': 300,
 }
 
 # 数据集输出路径
-FEED_URI = 'data/%(name)s_%(time)s.json'
+FEED_URI = 'data/%(name)s.json'
+
 # 数据集输出格式
 FEED_FORMAT = 'json'
 

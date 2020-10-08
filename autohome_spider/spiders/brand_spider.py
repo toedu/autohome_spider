@@ -10,7 +10,17 @@ from autohome_spider.items import BrandItem
 class BrandSpider(scrapy.Spider):
     name = 'brand'
     allowed_domains = 'autohome.com.cn'
-    start_urls = ['http://www.autohome.com.cn/grade/carhtml/%s.html' % chr(ord('A') + i) for i in range(26)]
+    start_urls = ['http://www.autohome.com.cn/grade/carhtml/%s.html' %
+                  chr(ord('A') + i) for i in range(26)]
+
+    custom_settings = {
+        'FEED_URI': 'data/%(name)s.json',
+
+        'ITEM_PIPELINES': {
+            'autohome_spider.pipelines.ImagespiderPipeline': 1,
+            # 'autohome_spider.pipelines.BrandJsonPipeline': 2,
+        }
+    }
 
     def parse(self, response):
         print "URL: " + response.request.url
@@ -26,5 +36,6 @@ class BrandSpider(scrapy.Spider):
             # scrapy.log.msg("dddddddddddfff")
             # brand['name'] = brandPart.xpath('dt/div/a/text()')[0]
             brand['name'] = brandPart.xpath('dt/div/a/text()')[0].extract()
-            brand['imgUrl'] = "https:" + brandPart.xpath('dt/a/img/@src')[0].extract()
+            brand['imgUrl'] = "https:" + \
+                brandPart.xpath('dt/a/img/@src')[0].extract()
             yield brand

@@ -7,7 +7,7 @@ import codecs
 import types
 import sys
 reload(sys)
-sys.setdefaultencoding('utf-8')
+# sys.setdefaultencoding('utf-8')
 
 brandList = json.loads(open('brand_2020-10-06T09-33-02.json').read())
 # seriesList = json.loads(open('series_2017-07-19T03-24-17.json').read())
@@ -25,7 +25,7 @@ for i in range(26):
     print '------------------------' + x
     for brand in brandList:
         if brand['tag'] == x:
-            tempBrand = brand.copy();
+            tempBrand = brand.copy()
             del tempBrand['imgUrl']
             del tempBrand['tag']
 
@@ -34,14 +34,14 @@ for i in range(26):
 
     # print x
 
-# name_emb = {'a':'1111','b':'2222','c':'3333','d':'4444'} 
+# name_emb = {'a':'1111','b':'2222','c':'3333','d':'4444'}
 
-emb_filename = ('./brand.json')  
-jsObj = json.dumps(obj, indent=4, sort_keys=True)   
-with open(emb_filename, "w") as f:   
+emb_filename = ('./brand.json')
+jsObj = json.dumps(obj, indent=4, sort_keys=True)
+with open(emb_filename, "w") as f:
     f.write(jsObj)
-    f.close()    
-    
+    f.close()
+
 
 # print brandDict
 # seriesDict = {series['id'].strip('s'): series for series in seriesList}
@@ -92,4 +92,3 @@ with open(emb_filename, "w") as f:
 #     writer.writerow(row)
 
 print 'finish..'
-
