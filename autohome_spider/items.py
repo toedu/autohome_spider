@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+import scrapy
+
+
+# 品牌
+class BrandItem(scrapy.Item):
+    tag = scrapy.Field()
+    id = scrapy.Field()
+    name = scrapy.Field()
+    # url = scrapy.Field()
+    # pic = scrapy.Field()
+    imgUrl = scrapy.Field()
+
+
+# 车系
+class SeriesItem(scrapy.Item):
+    id = scrapy.Field()
+    brand_id = scrapy.Field()
+    make_name = scrapy.Field()
+    price = scrapy.Field()
+    name = scrapy.Field()
+    url = scrapy.Field()
+
+
+# 车型
+class ModelItem(scrapy.Item):
+    id = scrapy.Field()
+    series_id = scrapy.Field()
+    name = scrapy.Field()
+    group = scrapy.Field()
+    price = scrapy.Field()
+
+class SpecItem(scrapy.Item):
+    id = scrapy.Field()
+    spec = scrapy.Field()
+
+class DetailItem(scrapy.Item):
+    id = scrapy.Field()
+    detail = scrapy.Field()
