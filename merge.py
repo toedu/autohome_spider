@@ -9,8 +9,8 @@ import sys
 reload(sys)
 # sys.setdefaultencoding('utf-8')
 
-brandList = json.loads(open('brand_2020-10-06T09-33-02.json').read())
-# seriesList = json.loads(open('series_2017-07-19T03-24-17.json').read())
+brandList = json.loads(open('data/brand.json').read())
+seriesList = json.loads(open('data/series.json').read())
 # modelList = json.loads(open('model_2017-07-19T03-25-04.json').read())
 # specList = json.loads(open('spec_2017-07-19T10-09-46.json').read())
 
@@ -24,6 +24,7 @@ for i in range(26):
     obj[x] = []
     print '------------------------' + x
     for brand in brandList:
+        series_obj = []
         if brand['tag'] == x:
             tempBrand = brand.copy()
             del tempBrand['imgUrl']
@@ -31,16 +32,43 @@ for i in range(26):
 
             obj[x].append(tempBrand)
             # print brand['name']
-
-    # print x
-
-# name_emb = {'a':'1111','b':'2222','c':'3333','d':'4444'}
-
-emb_filename = ('./brand.json')
+# 保存brand分类文件
+emb_filename = ('./output/brand.json')
 jsObj = json.dumps(obj, indent=4, sort_keys=True)
 with open(emb_filename, "w") as f:
     f.write(jsObj)
     f.close()
+
+
+for brand in brandList:
+    series_obj = {}
+    print '--------------------------' + brand['name']
+
+    # 循环该品牌有多少个厂商
+    makes = []
+
+    for serie in seriesList:
+
+        # if makes.count(serie['make_name']) == 0:
+        #     makes.append(serie['make_name'])
+        # print serie['make_name']
+        if serie['brand_id'] == brand['id']:
+            makeName = serie['make_name']
+            if series_obj.has_key(makeName):
+                tempSerie = serie.copy()
+                del tempSerie['url']
+                series_obj[makeName].append(tempSerie)
+            else:
+                tempSerie = serie.copy()
+                del tempSerie['url']
+                series_obj[makeName] = [tempSerie]
+
+        # 分别保存品牌的车系
+        series_filename = ('./output/serie_' + brand['id'] + '.json')
+        seriesObj = json.dumps(series_obj, indent=4, sort_keys=True)
+        with open(series_filename, "w") as f:
+            f.write(seriesObj)
+            f.close()
 
 
 # print brandDict
