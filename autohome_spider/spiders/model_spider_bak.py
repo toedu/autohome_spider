@@ -12,9 +12,10 @@ from autohome_spider.constants import levelMap
 
 # 车型数据爬虫
 class ModelSpider(CrawlSpider):
-    name = 'model'
+    name = 'model2'
     allowed_domains = 'autohome.com.cn'
-    start_urls = ['http://www.autohome.com.cn/grade/carhtml/%s.html' % chr(ord('A') + i) for i in range(26)]
+    start_urls = ['http://www.autohome.com.cn/grade/carhtml/%s.html' %
+                  chr(ord('A') + i) for i in range(26)]
 
     rules = (
         # 字母分区页
@@ -38,7 +39,8 @@ class ModelSpider(CrawlSpider):
         for seriesId in response.xpath('body/dl').re(r'id="s(\d+)"'):
             series_page_url = "http://www.autohome.com.cn/" + seriesId
             print 'series_page_url:%s' % (series_page_url)
-            request = scrapy.Request(url=series_page_url, callback=self.parse_model_selling, dont_filter=True)
+            request = scrapy.Request(
+                url=series_page_url, callback=self.parse_model_selling, dont_filter=True)
             request.meta['series_id'] = seriesId
             yield request
 
@@ -67,11 +69,15 @@ class ModelSpider(CrawlSpider):
 
                 models = panel[i * 2 + 1]
                 for model in models.xpath('li'):
-                    model_name = model.xpath('div[@class="interval01-list-cars"]/div/p/a/text()')[0].extract()
-                    model_id = model.xpath('div[@class="interval01-list-cars"]/div/p/@data-gcjid')[0].extract()
-                    price = model.xpath('div[@class="interval01-list-guidance"]/div/text()')[0].re(r'(\d+\.\d+)')
+                    model_name = model.xpath(
+                        'div[@class="interval01-list-cars"]/div/p/a/text()')[0].extract()
+                    model_id = model.xpath(
+                        'div[@class="interval01-list-cars"]/div/p/@data-gcjid')[0].extract()
+                    price = model.xpath(
+                        'div[@class="interval01-list-guidance"]/div/text()')[0].re(r'(\d+\.\d+)')
                     if not price:
-                        price = model.xpath('div[@class="interval01-list-guidance"]/div/text()')[1].re(r'(\d+\.\d+)')
+                        price = model.xpath(
+                            'div[@class="interval01-list-guidance"]/div/text()')[1].re(r'(\d+\.\d+)')
 
                     model = ModelItem()
                     model['id'] = model_id
@@ -86,20 +92,24 @@ class ModelSpider(CrawlSpider):
 
             # 解析历史年款车型数据URL，并添加到request队列
             try:
-                level = response.xpath("//div[@class='path fn-clear']/div/a[2]/@href")[0].extract().strip('/')
+                level = response.xpath(
+                    "//div[@class='path fn-clear']/div/a[2]/@href")[0].extract().strip('/')
                 level = levelMap[level]
             except Exception as e:
                 # log.msg('level not match, series_id[%s], msg[%s].' % (series_id, e.message), log.WARNING)
                 return
 
-            year_ids = response.xpath('//div[@id="drop2"]/div/ul/li/a/@data').extract()
+            year_ids = response.xpath(
+                '//div[@id="drop2"]/div/ul/li/a/@data').extract()
             if not year_ids:
                 # log.msg('year_id not found, series_id[%s].' % series_id, log.WARNING)
                 return
 
             for year_id in year_ids:
-                url = 'http://www.autohome.com.cn/ashx/series_allspec.ashx?s=%s&y=%s&l=%s' % (series_id, year_id, level)
-                request = scrapy.Request(url=url, callback=self.parse_model_selled, dont_filter=True)
+                url = 'http://www.autohome.com.cn/ashx/series_allspec.ashx?s=%s&y=%s&l=%s' % (
+                    series_id, year_id, level)
+                request = scrapy.Request(
+                    url=url, callback=self.parse_model_selled, dont_filter=True)
                 request.meta['series_id'] = series_id
                 yield request
 
@@ -112,9 +122,12 @@ class ModelSpider(CrawlSpider):
                 model_tags = response.xpath('//table/tr')
 
             for model_tag in model_tags:
-                model_id = model_tag.xpath('td[@class="name_d"]/a/@href')[0].re(r'spec/(\d+)/')[0]
-                model_name = model_tag.xpath('td[@class="name_d"]/a/@title')[0].extract()
-                price = model_tag.xpath('td[@class="price_d"]/text()').re(ur'(\d+\.\d+)')
+                model_id = model_tag.xpath(
+                    'td[@class="name_d"]/a/@href')[0].re(r'spec/(\d+)/')[0]
+                model_name = model_tag.xpath(
+                    'td[@class="name_d"]/a/@title')[0].extract()
+                price = model_tag.xpath(
+                    'td[@class="price_d"]/text()').re(ur'(\d+\.\d+)')
 
                 model = ModelItem()
                 model['id'] = model_id
