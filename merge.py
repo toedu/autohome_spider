@@ -11,7 +11,7 @@ reload(sys)
 
 brandList = json.loads(open('data/brand.json').read())
 seriesList = json.loads(open('data/series.json').read())
-# modelList = json.loads(open('model_2017-07-19T03-25-04.json').read())
+modelList = json.loads(open('data/model.json').read())
 # specList = json.loads(open('spec_2017-07-19T10-09-46.json').read())
 
 # print brandList
@@ -40,6 +40,9 @@ with open(emb_filename, "w") as f:
     f.close()
 
 
+###################################################################
+# 合并车系数据
+series_ids = []
 for brand in brandList:
     series_obj = {}
     print '--------------------------' + brand['name']
@@ -52,6 +55,7 @@ for brand in brandList:
         # if makes.count(serie['make_name']) == 0:
         #     makes.append(serie['make_name'])
         # print serie['make_name']
+        series_ids.append(serie['id'])
         if serie['brand_id'] == brand['id']:
             makeName = serie['make_name']
             if series_obj.has_key(makeName):
@@ -63,12 +67,31 @@ for brand in brandList:
                 del tempSerie['url']
                 series_obj[makeName] = [tempSerie]
 
-        # 分别保存品牌的车系
-        series_filename = ('./output/serie_' + brand['id'] + '.json')
-        seriesObj = json.dumps(series_obj, indent=4, sort_keys=True)
-        with open(series_filename, "w") as f:
-            f.write(seriesObj)
-            f.close()
+    # 每个文件保存一个品牌下的所有车系
+    series_filename = ('./output/brand/b_' + brand['id'] + '.json')
+    seriesObj = json.dumps(series_obj, indent=4, sort_keys=True)
+    with open(series_filename, "w") as f:
+        f.write(seriesObj)
+        f.close()
+
+###################################################################
+# 合并车型数据，将每个车系下的车型存成一个json文件
+for series_id in series_ids:
+    model_obj = {}
+    for model in modelList:
+        if model['series_id'] == series_id:
+            group_name = model['group']
+            tempModel = model.copy()
+            if model_obj.has_key(group_name):
+                model_obj[group_name].append(tempModel)
+            else:
+                model_obj[group_name] = [tempModel]
+    # 分别保存品牌的车系
+    model_filename = ('./output/series/' + series_id + '.json')
+    modelObj = json.dumps(model_obj, indent=4, sort_keys=True)
+    with open(model_filename, "w") as f:
+        f.write(modelObj)
+        f.close()
 
 
 # print brandDict
