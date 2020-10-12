@@ -20,6 +20,7 @@ class SeriesItem(scrapy.Item):
     price = scrapy.Field()
     name = scrapy.Field()
     url = scrapy.Field()
+    colors = scrapy.Field()
 
 
 # 车型
@@ -30,9 +31,11 @@ class ModelItem(scrapy.Item):
     group = scrapy.Field()
     price = scrapy.Field()
 
+
 class SpecItem(scrapy.Item):
     id = scrapy.Field()
     spec = scrapy.Field()
+
 
 class DetailItem(scrapy.Item):
     id = scrapy.Field()
