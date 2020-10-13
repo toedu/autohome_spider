@@ -9,11 +9,11 @@ from autohome_spider.items import ModelItem
 class SeriesSpider(scrapy.Spider):
     name = 'model'
     allowed_domains = 'autohome.com.cn'
-    start_urls = ['http://www.autohome.com.cn/grade/carhtml/A.html']
-    # start_urls = [
-    #     'http://www.autohome.com.cn/grade/carhtml/%s.html' % chr(ord('A') + i)
-    #     for i in range(26)
-    # ]
+    # start_urls = ['http://www.autohome.com.cn/grade/carhtml/A.html']
+    start_urls = [
+        'http://www.autohome.com.cn/grade/carhtml/%s.html' % chr(ord('A') + i)
+        for i in range(26)
+    ]
 
     request_ids = [33, 35, 34, 327, 36, 14, 15, 38, 75, 40, 120, 13, 27, 39, 95, 154, 173, 208, 231, 203, 79, 392, 387, 301, 271, 351, 76, 77, 163, 294, 299, 366, 196, 1, 165, 32, 113, 259, 169, 405, 142, 81, 341, 326, 3, 8, 96, 42, 416, 434, 141, 197, 82, 152, 329, 376, 313, 112, 383, 369, 181, 91, 86, 150, 267, 97, 164, 386, 429, 25, 46, 44, 84, 358, 319, 119, 83, 270, 145, 373, 419,
                    151, 175, 356, 47, 9, 214, 101, 156, 213, 109, 199, 52, 279, 49, 51, 53, 345, 54, 48, 10, 78, 88, 80, 335, 124, 215, 58, 20, 57, 56, 129, 381, 309, 60, 331, 308, 26, 62, 122, 312, 210, 63, 19, 296, 67, 68, 155, 65, 330, 325, 69, 306, 426, 162, 269, 433, 133, 400, 339, 161, 114, 70, 283, 284, 167, 291, 393, 192, 12, 71, 72, 350, 396, 275, 324, 73, 110, 144, 111, 263, 286, 398, 74, 22]
@@ -47,7 +47,6 @@ class SeriesSpider(scrapy.Spider):
                             price = seriesPart.xpath(
                                 'div/a/text()')[0].extract()
                             if len(price) == 2:
-                                print('***********')
                                 continue
 
                             series_id = seriesPart.xpath('@id')[0].extract()
@@ -92,13 +91,3 @@ class SeriesSpider(scrapy.Spider):
                 modelItem['price'] = model_price
                 n = n+1
                 yield modelItem
-
-                # print "----------------"
-
-        for colorPart in response.xpath('//div[@class="athm-carcolor__inner"][1]/a'):
-
-            color_name = colorPart.xpath('div[2]/text()')[0].extract()
-            print "外观颜色 %s" % (color_name)
-
-        # print response.xpath(
-        #     '//div[@class="spec-wrap active"]/dl[1]/dd[1]/div/div/p[1]/a/text()').extract()
