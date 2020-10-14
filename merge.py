@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding=utf-8
 
+import pymssql
 import json
 import csv
 import codecs
@@ -18,6 +19,27 @@ modelList = json.loads(open('data/model.json').read())
 
 # brandDict = {brand['id']: brand for brand in brandList}
 
+
+host = "59.173.13.207"
+user = "yunyouche"
+pwd = "HsYAfRY9zm"
+db = "sqlyunyouche"
+
+conn = pymssql.connect(host=host,
+                       user=user,
+                       password=pwd,
+                       database=db,
+                       charset='utf8')
+cur = conn.cursor()  # 将数据库连接信息，赋值给cur。
+if not cur:
+    print("连接数据库失败")
+    exit()
+else:
+    print("连接数据库成功")
+
+# 清空表数据
+n = 0
+cur.execute("TRUNCATE TABLE sg_auto_brands")
 obj = {}
 for i in range(26):
     x = chr(ord("A") + i)
@@ -26,14 +48,21 @@ for i in range(26):
     for brand in brandList:
         series_obj = []
         if brand['tag'] == x:
+            print brand['id']
+            cur.execute("INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
+                        (int(brand['id']), brand['name'], brand['tag']))
             tempBrand = brand.copy()
             del tempBrand['imgUrl']
             del tempBrand['tag']
-
             obj[x].append(tempBrand)
+            n = n+1
             # print brand['name']
-# 保存brand分类文件
+    conn.commit()
+
+print "写入 %d 条品牌数据" % n
 emb_filename = ('./output/brand.json')
+
+# 保存brand分类文件
 jsObj = json.dumps(obj, indent=4, sort_keys=True)
 with open(emb_filename, "w") as f:
     f.write(jsObj)
@@ -41,6 +70,9 @@ with open(emb_filename, "w") as f:
 
 
 ###################################################################
+n = 0
+cur.execute("TRUNCATE TABLE sg_auto_series")
+
 # 合并车系数据
 series_ids = []
 for brand in brandList:
@@ -51,11 +83,8 @@ for brand in brandList:
     makes = []
 
     for serie in seriesList:
-
-        # if makes.count(serie['make_name']) == 0:
-        #     makes.append(serie['make_name'])
-        # print serie['make_name']
         series_ids.append(serie['id'])
+
         if serie['brand_id'] == brand['id']:
             makeName = serie['make_name']
             if series_obj.has_key(makeName):
@@ -67,6 +96,17 @@ for brand in brandList:
                 del tempSerie['url']
                 series_obj[makeName] = [tempSerie]
 
+            print serie['id']
+            print json.dumps(serie['colors']['in'])
+            print json.dumps(serie['colors']['out'])
+
+            # 插入数据库记录
+            cur.execute("INSERT INTO sg_auto_series VALUES (%s, %s, %d, %s, %s, %s)",
+                        (serie['id'], serie['name'], int(brand['id']), serie['make_name'], json.dumps(serie['colors']['in']), json.dumps(serie['colors']['out'])))
+            n = n+1
+
+    conn.commit()
+
     # 每个文件保存一个品牌下的所有车系
     series_filename = ('./output/brand/b_' + brand['id'] + '.json')
     seriesObj = json.dumps(series_obj, indent=4, sort_keys=True)
@@ -74,7 +114,14 @@ for brand in brandList:
         f.write(seriesObj)
         f.close()
 
+print "写入 %d 条车系数据" % n
+
+
 ###################################################################
+
+n = 0
+cur.execute("TRUNCATE TABLE sg_auto_model")
+
 # 合并车型数据，将每个车系下的车型存成一个json文件
 for series_id in series_ids:
     model_obj = {}
@@ -86,12 +133,34 @@ for series_id in series_ids:
                 model_obj[group_name].append(tempModel)
             else:
                 model_obj[group_name] = [tempModel]
+
+            price = model['price']
+            print "1: %s" % price
+            price2 = price.split("-")
+            price = price2[len(price2)-1]
+            print "2: %s" % price
+            price = price[:-1]
+            print "3: %s" % price
+            price = price.replace(".", "")
+            print "4: %s" % price
+
+            print "-------------- id: %s" % model["id"]
+
+            # 插入数据库记录
+            cur.execute("INSERT INTO sg_auto_model VALUES (%s, %s, %s, %s, %s, %s)",
+                        (model['id'], model['name'], series_id,
+                         '', int(price), model['group']))
+            n = n+1
+
+    conn.commit()
     # 分别保存品牌的车系
     model_filename = ('./output/series/' + series_id + '.json')
     modelObj = json.dumps(model_obj, indent=4, sort_keys=True)
     with open(model_filename, "w") as f:
         f.write(modelObj)
         f.close()
+
+print "写入 %d 条车型数据" % n
 
 
 # print brandDict
