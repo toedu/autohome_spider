@@ -29,16 +29,17 @@ if not cur:
 else:
     print("连接数据库成功")
 
-cur.executemany(
-    "INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
-    [(2, 'John Smith', 'A')])
-cur.execute("TRUNCATE TABLE sg_auto_brands")
+# cur.executemany(
+#     "INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
+#     [(2, 'John Smith', 'A')])
 
-for i in range(30):
+# cur.execute("TRUNCATE TABLE sg_auto_brands")
 
-    cur.execute("INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
-                (30+i, 'ffg', 'A'))
-conn.commit()
+# for i in range(30):
+
+#     cur.execute("INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
+#                 (30+i, 'ffg', 'A'))
+# conn.commit()
 
 
 def is_Chinese(word):
@@ -206,15 +207,23 @@ def parseLine(brand, series, model, str):
 # if len(brand_id) > 0:
 # break
 
-# str = "408 1477白⬇️35000[玫瑰]"
+# str = "408 1477白⬇️35000[玫瑰]
 # words = jieba.lcut(str)
 # for w in words:
 #     print w
 #     print is_number(w)
 
-print findSeriesByName('宝来')
+# print findSeriesByName('宝来')
 # s = findBrandByName('一汽大众')
 # print s
+
+name = "宝来"
+cur.execute(
+    "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
+rows = cur.fetchall()
+print "ssss %d " % len(rows)
+print rows
+
 exit()
 
 
