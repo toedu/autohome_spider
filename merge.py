@@ -68,6 +68,10 @@ with open(emb_filename, "w") as f:
     f.write(jsObj)
     f.close()
 
+# with open("./output/brand.json", "w") as f:
+#     json.dump(obj, f, ensure_ascii=False, sort_keys=True, indent=4)
+#     print "写入 %d 条品牌数据" % n
+
 
 ###################################################################
 n = 0
@@ -102,7 +106,10 @@ for brand in brandList:
 
             # 插入数据库记录
             cur.execute("INSERT INTO sg_auto_series VALUES (%s, %s, %d, %s, %s, %s)",
-                        (serie['id'], serie['name'], int(brand['id']), serie['make_name'], json.dumps(serie['colors']['in']), json.dumps(serie['colors']['out'])))
+                        (serie['id'], serie['name'],
+                         int(brand['id']),
+                         serie['make_name'],
+                         json.dumps(serie['colors']['in']), json.dumps(serie['colors']['out'])))
             n = n+1
 
     conn.commit()
@@ -147,9 +154,9 @@ for series_id in series_ids:
             print "-------------- id: %s" % model["id"]
 
             # 插入数据库记录
-            cur.execute("INSERT INTO sg_auto_model VALUES (%s, %s, %s, %s, %s, %s)",
-                        (model['id'], model['name'], series_id,
-                         '', int(price), model['group']))
+            cur.execute("INSERT INTO sg_auto_model VALUES (%s, %s, %s, %s, %d)",
+                        (model['id'], model['name'],
+                         model['group'], series_id, int(price)))
             n = n+1
 
     conn.commit()
