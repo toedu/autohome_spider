@@ -23,7 +23,7 @@ conn = pymssql.connect(host=host,
                        password=pwd,
                        database=db,
                        charset='utf8')
-cur = conn.cursor()  # 将数据库连接信息，赋值给cur。
+cur = conn.cursor(as_dict=True)  # 将数据库连接信息，赋值给cur。
 if not cur:
     raise(NameError, "连接数据库失败")
 else:
@@ -99,29 +99,28 @@ def findBrandByName(name):
     return brand_id
 
 
+def findSeriesByName(name):
+    cur.execute(
+        "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
+    rows = cur.fetchall()
+    if len(rows) > 0:
+        return rows[0]
+    return None
+
+
 def findModelByName(name):
     for model in modelList:
         if model['name'] == name:
             return model
 
 
-def findSeriesByName(name):
-    for series in seriesList:
-        if series['name'].find(name):
-            print series['name'].find(name)
-            print "'%s' found series %s %s %s %s" % (
-                name, series['name'], series['price'], series['id'], series['brand_id'])
-            return series
+def findModelByPrice(series_id, price):
+    cur.execute(
+        "SELECT * FROM sg_auto_model WHERE series_id = %s AND price = %d", (series_id, int(price)))
+    rows = cur.fetchall()
+    if len(rows) > 0:
+        return rows[0]
     return None
-
-
-def findModelByPrice(price):
-    list = []
-    for model in modelList:
-        modelPrice = formatPrice(model['price'])
-        if modelPrice == price:
-            list.append(model)
-    return list
 
 
 def parseBrand(str):
@@ -146,9 +145,11 @@ def parseSeries(str):
     return None
 
 
-def parseModel(str):
-
-    return ''
+def parseModel(series_id, str):
+    model = findModelByPrice(series_id, str)
+    if model:
+        return model
+    return None
 
 
 def parseColor(str):
@@ -157,27 +158,41 @@ def parseColor(str):
 
 
 def parseLine(brand, series, model, str):
-    print '---------------------------'
+    print '--------------------------- 解析行数据'
     print str
 
     result = {}
     if len(str) < 2:
         return {}
 
-    # 删除空格
+    # 删除字符串首尾空格
     str = str.strip()
     # str = str.replace(' ', '')
 
     words = jieba.lcut(str)
+    # print words
+    # 删除数组中的空格元素
+    for i in words[:]:
+        if i == " ":
+            words.remove(i)
+
     for w in words:
         print w
 
     if len(words) > 4:
+        # 整行格式
         if is_number(words[1]):
-            # 找车系
+            # 如果第二个词是数字，则判断第一个词是车系
             series = parseSeries(words[0])
             if series:
-                model = parseModel(words[1])
+                print "找到车系 ----- %s series is: %s %s %s" % (
+                    words[0], series['id'], series['brand_id'], series['make_name'])
+
+                # 根据价格查找车型配置
+                model = parseModel(series['id'], words[1])
+                if model:
+                    print "找到车型 ----- %s model is: %s %s %s" % (
+                        words[1], model['id'], model['name'], model['group'])
 
     # if brand == "":
     #     # 如果还没找到品牌，则搜索品牌
@@ -217,14 +232,14 @@ def parseLine(brand, series, model, str):
 # s = findBrandByName('一汽大众')
 # print s
 
-name = "宝来"
-cur.execute(
-    "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
-rows = cur.fetchall()
-print "ssss %d " % len(rows)
-print rows
+# name = "宝来"
+# cur.execute(
+#     "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
+# rows = cur.fetchall()
+# print "ssss %d " % len(rows)
+# print rows
 
-exit()
+# exit()
 
 
 t = """
