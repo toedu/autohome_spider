@@ -5,13 +5,14 @@ import pymssql
 import sys
 import json
 sys.path.append('/Users/ysong/Work/py/autohome_spider/parse')
+type = sys.getfilesystemencoding()
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-brandList = json.loads(open('data/brand.json').read())
-seriesList = json.loads(open('data/series.json').read())
-modelList = json.loads(open('data/model.json').read())
+# brandList = json.loads(open('data/brand.json').read())
+# seriesList = json.loads(open('data/series.json').read())
+# modelList = json.loads(open('data/model.json').read())
 
 jieba.load_userdict("dic.txt")
 
@@ -31,7 +32,7 @@ cur = conn.cursor(as_dict=True)  # 将数据库连接信息，赋值给cur。
 if not cur:
     raise(NameError, "连接数据库失败")
 else:
-    print("连接数据库成功")
+    print "连接数据库成功".decode('utf-8').encode(type)
 
 # cur.executemany(
 #     "INSERT INTO sg_auto_brands VALUES (%d, %s, %s)",
@@ -104,19 +105,6 @@ def findBrandByName(name):
         return rows[0]
     return None
 
-    # brand_id = ''
-    # # 在品牌列表中找
-    # for brand in brandList:
-    #     n = brand['name']
-    #     if n == name:
-    #         brand_id = brand['id']
-    #         break
-    # for series in seriesList:
-    #     if series['make_name'] == name:
-    #         brand_id = series['brand_id']
-    #         break
-    # return brand_id
-
 
 def findSeriesByName(brand, name):
 
@@ -175,14 +163,29 @@ def parseModel(series_id, str):
     return None
 
 
-def parseColor(str):
+def parseColor(list):
+    print '-------- parseColor'
+    result = []
+    for w in list:
+        if len(w) > 1:
+            for i in range(len(w)):
+                s = w[i]
+                # print s.decode('utf-8').encode(type)
+                if COLORS.count(s) > 0 and result.count(s) == 0:
+                    result.append(s)
+        else:
+            if COLORS.count(w) > 0 and result.count(w) == 0:
+                result.append(w)
+            # print w.decode('utf-8').encode(type)
 
-    return ''
+    # for w in result:
+    #     print w.decode('utf-8').encode(type)
+    return result
 
 
 def parseLine(brand, series, model, str):
-    print '--------------------------- 解析行数据'
-    print str
+    print '--------------------------- 解析行数据'.decode('utf-8').encode(type)
+    print str.decode('utf-8').encode(type)
 
     result = {}
     if len(str) < 2:
@@ -207,31 +210,35 @@ def parseLine(brand, series, model, str):
         if is_number(words[1]):
             # 如果第二个词是数字，则判断第一个词是车系
             series = parseSeries(brand, words[0])
+            result['series'] = series
             if series:
 
-                print "找到车系 ----- %s series is: %s %s %s" % (
-                    words[0], series['id'], series['brand_id'], series['make_name'])
+                # print "找到车系 ----- %s series is: %s %s %s" % (
+                #     words[0], series['id'], series['brand_id'], series['make_name'])
 
                 # 根据价格查找车型配置
                 model = parseModel(series['id'], words[1])
+
                 if model:
+                    result['model'] = model['id']
 
-                    print "找到车型 ----- %s model is: %s %s %s" % (
-                        words[1], model['id'], model['name'], model['group'])
+                    # print "找到车型 ----- %s model is: %s %s %s" % (
+                    #     words[1], model['id'], model['name'], model['group'])
                     words.pop(0)
                     words.pop(0)
 
-                    print "-----打印剩余数组:"
-                    for w in words:
-                        print w
+                    #   print "-----打印剩余数组:".decode('utf-8').encode(type)
+                    #    for w in words:
+                    #         print w
 
                     for i in range(len(words)):
+                        # 找到优惠价格的字段，并截取颜色相关字段
                         if is_number(words[i]):
                             print i
                             discount = words[i]
                             print "discount: %s" % discount
                             color_words = words[:i]
-                            print color_words
+                            result['colors'] = parseColor(color_words)
                             break
     else:
         # 分析行中是否包含品牌信息
