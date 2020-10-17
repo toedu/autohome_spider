@@ -13,6 +13,10 @@ brandList = json.loads(open('data/brand.json').read())
 seriesList = json.loads(open('data/series.json').read())
 modelList = json.loads(open('data/model.json').read())
 
+jieba.load_userdict("dic.txt")
+
+COLORS = ['白', '黑', '红', '银', '黑', '灰', '金', '蓝', '棕', '青', '紫', '绿']
+
 host = "59.173.13.207"
 user = "yunyouche"
 pwd = "HsYAfRY9zm"
@@ -68,6 +72,14 @@ def is_number(s):
     return False
 
 
+def countNumber(list):
+    i = 0
+    for w in list:
+        if is_number(w):
+            i = i+1
+    return i
+
+
 def formatPrice(price):
     price2 = price.split("-")
     price = price2[len(price2)-1]
@@ -79,29 +91,41 @@ def formatPrice(price):
 
 
 def findBrandById(brand_id):
-    sql = 'select * from sg_auto_brand where id = ' + brand_id
+    sql = 'select * from sg_auto_brands where id = ' + brand_id
     a = cur.execute(sql)
     print a
 
 
 def findBrandByName(name):
-    brand_id = ''
-    # 在品牌列表中找
-    for brand in brandList:
-        n = brand['name']
-        if n == name:
-            brand_id = brand['id']
-            break
-    for series in seriesList:
-        if series['make_name'] == name:
-            brand_id = series['brand_id']
-            break
-    return brand_id
-
-
-def findSeriesByName(name):
     cur.execute(
-        "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
+        "SELECT * FROM sg_auto_brands WHERE name like %s", name.decode('utf8'))
+    rows = cur.fetchall()
+    if len(rows) > 0:
+        return rows[0]
+    return None
+
+    # brand_id = ''
+    # # 在品牌列表中找
+    # for brand in brandList:
+    #     n = brand['name']
+    #     if n == name:
+    #         brand_id = brand['id']
+    #         break
+    # for series in seriesList:
+    #     if series['make_name'] == name:
+    #         brand_id = series['brand_id']
+    #         break
+    # return brand_id
+
+
+def findSeriesByName(brand, name):
+
+    if brand == 0:
+        cur.execute(
+            "SELECT * FROM sg_auto_series WHERE name like %s", name.decode('utf8'))
+    else:
+        cur.execute(
+            "SELECT * FROM sg_auto_series WHERE brand_id = %d and name like %s", (brand, '%'+name.decode('utf8')+'%'))
     rows = cur.fetchall()
     if len(rows) > 0:
         return rows[0]
@@ -124,20 +148,19 @@ def findModelByPrice(series_id, price):
 
 
 def parseBrand(str):
-    # 字符串中分析品牌类型
+    print "字符串中分析品牌类型"
     words = jieba.lcut_for_search(str)
     for i in range(len(words)):
         word = words[len(words)-1-i]
         print "%s" % word
-        brand_id = findBrandByName(word)
-        print "brand_id: %s" % brand_id
-        if len(brand_id) > 0:
-            return brand_id
-    return ''
+        brand = findBrandByName(word)
+        if brand:
+            return brand['id']
+    return 0
 
 
-def parseSeries(str):
-    series = findSeriesByName(str)
+def parseSeries(brand, str):
+    series = findSeriesByName(brand, str)
     if series:
         # print "'%s' found series %s %s %s %s" % (
         #     str, series['name'], series['price'], series['id'], series['brand_id'])
@@ -179,92 +202,113 @@ def parseLine(brand, series, model, str):
     for w in words:
         print w
 
-    if len(words) > 4:
+    if len(words) > 4 and countNumber(words) > 1:
         # 整行格式
         if is_number(words[1]):
             # 如果第二个词是数字，则判断第一个词是车系
-            series = parseSeries(words[0])
+            series = parseSeries(brand, words[0])
             if series:
+
                 print "找到车系 ----- %s series is: %s %s %s" % (
                     words[0], series['id'], series['brand_id'], series['make_name'])
 
                 # 根据价格查找车型配置
                 model = parseModel(series['id'], words[1])
                 if model:
+
                     print "找到车型 ----- %s model is: %s %s %s" % (
                         words[1], model['id'], model['name'], model['group'])
+                    words.pop(0)
+                    words.pop(0)
 
-    # if brand == "":
-    #     # 如果还没找到品牌，则搜索品牌
-    #     brand_id = parseBrand(str)
-    #     if brand_id != '':
-    #         result['brand_id'] = brand_id
+                    print "-----打印剩余数组:"
+                    for w in words:
+                        print w
+
+                    for i in range(len(words)):
+                        if is_number(words[i]):
+                            print i
+                            discount = words[i]
+                            print "discount: %s" % discount
+                            color_words = words[:i]
+                            print color_words
+                            break
+    else:
+        # 分析行中是否包含品牌信息
+        brand_id = parseBrand(str)
+        print "brand: %d" % brand_id
+        result['brand_id'] = brand_id
 
     return result
 
 
-# words = jieba.cut_for_search('一汽大众')
-# print words
-
-# seg_list = jieba.cut_for_search("一汽大众")  # 搜索引擎模式
-# print(", ".join(seg_list))
-
-# str = "麟城一汽大众"
-# words = jieba.lcut_for_search(str)
-# for w in words:
-# print w
-# for i in range(len(words)):
-#     print i
-#     word = words[len(words)-1-i]
-#     print "%s" % word
-#     brand_id = findBrandByName(word)
-#     print "brand_id: %s" % brand_id
-# if len(brand_id) > 0:
-# break
-
-# str = "408 1477白⬇️35000[玫瑰]
-# words = jieba.lcut(str)
-# for w in words:
-#     print w
-#     print is_number(w)
-
-# print findSeriesByName('宝来')
-# s = findBrandByName('一汽大众')
-# print s
-
-# name = "宝来"
+# brand = 13
+# name = '408'
 # cur.execute(
-#     "SELECT * FROM sg_auto_series WHERE name = %s", name.decode('utf8'))
+#     "SELECT * FROM sg_auto_series WHERE brand_id = %d and name like %s", (brand, '%'+name.decode('utf8')+'%'))
 # rows = cur.fetchall()
-# print "ssss %d " % len(rows)
 # print rows
-
 # exit()
 
 
 t = """
-宝来1350白 金 银全款36500店保 分期38500
-宝来1390白 金 银全款36500店保 分期38500
-速腾1389白 银 黑全款36500店保 分期39500
-速腾1759白 银 黑全款36500店保 分期39500
+润祥捷 雪佛兰大卖
+==========
+科沃兹799白灰色，34000 近期
+科沃兹899白灰色，37500 近期
+科沃兹969白灰色，37500 近期
+科沃兹999灰优惠，37500 近期
+==========
+科鲁泽1089白灰红，46000
+科鲁泽1119白灰黑，45500 
+科鲁泽1179白灰红，45500
+科鲁泽1299白灰色，46000
+科鲁泽1179白灰黑，44000 四缸
+科鲁泽1119白灰黑，44500 四缸
+==========
+迈锐宝1749白灰黑46000 新款
+迈锐宝1749蓝优惠46000 新款
+迈锐宝1849白黑色46000 新款
+迈锐宝1649灰优惠57000 1月
+迈锐宝1749灰黑色57000 4月
+迈锐宝1949白黑灰56000 近期
+迈锐宝1949白优惠58000 12月
+迈锐宝2049白灰色59000 
+迈锐宝2049白黑灰56000 近期
+迈锐宝2199黑灰色55500 近期
+==========
+探界者1899白灰色58000 1月
+探界者1899黑灰色56500 近期
+探界者1999白黑灰58000
+探界者2259白黑灰56500 近期
+探界者2459黑优惠58000 12月
+==========
+沃兰多1399白灰色54500 12月
+沃兰多1419白两灰49000 轻混
+沃兰多1549白两灰51000 轻混
+沃兰多1499海崖灰53000 12月
+沃兰多1499白灰色54500 12月
+创 酷1279白红色52000 8月
+==========
+开拓者2599黑银色，51000 5座
+开拓者2899黑优惠，51000 5座
+开拓者2799 白灰色，51000 7座
+开拓者2899灰黑色，51000 7座
+开拓者3099黑优惠，51000 7座
+开拓者3299黑灰色，51000 7座
+==========
+店车票 有汽贸票 有裸出交强 
+厦门润祥捷汽车有限公司
+润祥捷——您的专属订车顾问！
+ 17779664566(微信) 林
+诚信换群 换群备注
 
-探歌1558白 金   全款裸车32000店保38000
-探歌1608白 金   全款裸车32000店保38000
 
-探歌1708白 金   全款裸车30000店保36000
-迈腾1869黑      全款裸车32000分期38000店保
-
-迈腾2199黑      全款裸车32000分期38000店保
-迈腾2339黑      全款裸车32000分期38000店保
-
-探岳2209白 黑   全款裸车33500分期35500裸车
-
-探岳2049白 黑   全款裸车33500分期35500裸车
 
 """
 
 
-brand = ''
+brand = 0
 series = ''
 model = ''
 modelList = []
@@ -275,10 +319,5 @@ t = t.replace('】', ' ')
 l = t.split('\n')
 for i in range(len(l)):
     obj = parseLine(brand, series, model, l[i])
-    # if obj.hasKey('brand_id'):
-    #     brand = obj['brand_id']
-
-    # list = findModelByPrice('2038')
-    # for m in list:
-    #     print 'name: %s, group: %s, price: %s' % (
-    #         m['name'], m['group'], m['price'])
+    if obj.has_key('brand_id') and obj['brand_id'] > 0:
+        brand = obj['brand_id']
